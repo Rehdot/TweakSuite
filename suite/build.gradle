@@ -1,0 +1,96 @@
+import net.fabricmc.loom.task.RemapJarTask
+
+plugins {
+    id 'java'
+    id 'fabric-loom' version "${loom_version}"
+}
+
+group = 'redot.tweaksuite.suite'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    implementation 'net.fabricmc:tiny-remapper:0.8.6'
+    implementation 'net.fabricmc:mapping-io:0.5.0'
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    // Redot dependency
+    implementation project(':commons')
+
+    // <!> USE ONE OF THE 2 BELOW LINES FOR REMAPPING TO INTERMEDIARY OR OFFICIAL <!>
+//    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    mappings loom.officialMojangMappings()
+
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.3+1.20.4"
+
+    implementation 'org.benf:cfr:0.152'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def sandboxClassesDir = layout.buildDirectory.dir("sandbox-classes")
+
+tasks.register('compileSandbox', JavaCompile) {
+    group = 'tweak'
+    description = 'Compiles only sandbox source files.'
+    source = fileTree(dir: 'src/main/java', includes: ['redot/tweaksuite/suite/sandbox/**/*.java'])
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory.set(sandboxClassesDir)
+    options.release.set(17)
+}
+
+def sandboxJar = tasks.register('sandboxJar', Jar) {
+    group = 'tweak'
+    dependsOn 'compileSandbox'
+    archiveClassifier.set('sandbox')
+    from (sandboxClassesDir) {
+        include '**/*.class'
+    }
+}
+
+tasks.register('remapSandboxJar', RemapJarTask) {
+    group = 'tweak'
+    dependsOn sandboxJar
+    inputFile.set(sandboxJar.get().archiveFile)
+    archiveClassifier.set('remapped-sandbox')
+    addNestedDependencies.set(false)
+
+    // <!> USE EITHER 'official' OR 'intermediary' BELOW <!>
+    targetNamespace.set('official')
+}
+
+tasks.register('killProcesses', JavaExec) {
+    group = 'tweak'
+    description = 'Kills all running TweakSuite processes in Minecraft'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set("redot.tweaksuite.suite.core.ProcessKiller")
+}
+
+tasks.register('execute', JavaExec) {
+    group = 'tweak'
+    description = 'Compile, remap, decompile, and send to Minecraft.'
+    dependsOn 'remapSandboxJar'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('redot.tweaksuite.suite.core.SuiteMain')
+
+    doFirst {
+        def remapTask = tasks.getByName('remapSandboxJar')
+        systemProperty 'remapped.jar.path', remapTask.archiveFile.get().asFile.absolutePath
+    }
+}
