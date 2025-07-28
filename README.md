@@ -1,9 +1,11 @@
-# 🛠️ TweakSuite
+🛠️ TweakSuite
+=
 _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-## 📦 Requirements
+📦 Requirements
+-
 - Code editor (IntelliJ recommended)
 - Fabric Loader or Fabric-compatible client
 - JVM arguments (seriously, **don't skip these**):
@@ -14,7 +16,8 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-## ⚙️ The Process
+⚙️ The Process
+-
 1. You write de-obfuscated Yarn or Mojang code.
 2. You run the `execute` Gradle task.
 3. TweakSuite compiles, remaps, decompiles, and _yeets_ your code into the game.
@@ -22,7 +25,8 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-## 🚀 Getting Started
+🚀 Getting Started
+-
 1. Clone this repository into your editor.
 2. Either build the client-side mod, or download it from the latest release.
 3. Launch Minecraft with Fabric _(Don't forget the JVM args above - it will break)_
@@ -31,14 +35,16 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-## ✨ Features
+✨ Features
+-
 - Write & run code _while_ the game is running.
 - Re-write and run the same class without renaming it every time.
 - Remapping support... because nobody likes `method_30918`
 
 ---
 
-## 🧱 Limitations
+🧱 Limitations
+-
 - Only compiles classes inside the sandbox directory.
 - Compiled classes are garbage collected when the JVM feels like it.
 - There's a short wait while Gradle does its startup dance.
@@ -46,8 +52,8 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-## 🧪 Writing Code
-
+🧪 Writing Code
+-
 To get your code to actually **run**, you’ll need to annotate 
 a static, no-parameter method with `@Entrypoint`
 
@@ -68,8 +74,8 @@ public class TestClass {
 ```
 ---
 
-## 🛑 The Kill Switch
-
+🛑 The Kill Switch
+-
 This will try to stop TweakSuite code execution. 
 You have two. One is a keybind in-game,
 and the other is the `killProcesses` Gradle task.  
@@ -78,7 +84,8 @@ If the kill switch does not work, best of luck to you.
 
 ---
 
-## ⚠️ Disclaimer
+⚠️ Disclaimer
+-
 TweakSuite is the successor to [ConcurrentExecutor](https://github.com/Rehdot/ConcurrentExecutor)
 ... but now with remapping, IntelliSense, and far more potential for disaster.
 
