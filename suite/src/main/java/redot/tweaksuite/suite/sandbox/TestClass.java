@@ -1,7 +1,5 @@
 package redot.tweaksuite.suite.sandbox;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import redot.tweaksuite.commons.Entrypoint;
 
 public class TestClass {

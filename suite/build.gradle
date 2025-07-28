@@ -5,8 +5,16 @@ plugins {
     id 'fabric-loom' version "${loom_version}"
 }
 
+enum MappingType {
+    INTERMEDIARY,
+    OFFICIAL
+}
+
 group = 'redot.tweaksuite.suite'
 version = '1.0-SNAPSHOT'
+
+// <!> CHANGE THIS VARIABLE TO SWAP MAPPINGS <!>
+def mapping = MappingType.OFFICIAL
 
 repositories {
     mavenCentral()
@@ -21,9 +29,14 @@ dependencies {
     // Redot dependency
     implementation project(':commons')
 
-    // <!> USE ONE OF THE 2 BELOW LINES FOR REMAPPING TO INTERMEDIARY OR OFFICIAL <!>
-//    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    mappings loom.officialMojangMappings()
+    switch (mapping) {
+        case MappingType.INTERMEDIARY:
+            mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+            break
+        default:
+            mappings loom.officialMojangMappings()
+            break
+    }
 
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.3+1.20.4"
@@ -70,9 +83,7 @@ tasks.register('remapSandboxJar', RemapJarTask) {
     inputFile.set(sandboxJar.get().archiveFile)
     archiveClassifier.set('remapped-sandbox')
     addNestedDependencies.set(false)
-
-    // <!> USE EITHER 'official' OR 'intermediary' BELOW <!>
-    targetNamespace.set('official')
+    targetNamespace.set(mapping.name().toLowerCase())
 }
 
 tasks.register('killProcesses', JavaExec) {

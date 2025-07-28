@@ -52,8 +52,21 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
+🔀 Mappings
+-
+TweakSuite supports both Mojang's Official and Fabric's Intermediary mappings.
+To switch between them, just change one line in `suite/build.gradle`:
+```groovy
+// <!> CHANGE THIS VARIABLE TO SWAP MAPPINGS <!>
+def mapping = MappingType.OFFICIAL // or MappingType.INTERMEDIARY
+```
+Just like any other variable. You're welcome.
+
+---
+
 🧪 Writing Code
 -
+
 To get your code to actually **run**, you’ll need to annotate 
 a static, no-parameter method with `@Entrypoint`
 
