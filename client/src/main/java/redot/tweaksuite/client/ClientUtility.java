@@ -3,6 +3,7 @@ package redot.tweaksuite.client;
 import net.openhft.compiler.CachedCompiler;
 import org.jetbrains.annotations.NotNull;
 import redot.tweaksuite.commons.Entrypoint;
+import redot.tweaksuite.commons.SuiteThread;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -101,7 +102,7 @@ public class ClientUtility {
         for (Class<?> clazz : cList) {
             for (Method method : clazz.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Entrypoint.class)) {
-                    Thread thread = getInvokerThread(method);
+                    SuiteThread thread = getInvokerThread(method);
                     TweakSuiteClient.getThreadRegistry().add(thread);
                     thread.start();
                 }
@@ -110,9 +111,9 @@ public class ClientUtility {
     }
 
     @NotNull
-    private static Thread getInvokerThread(Method method) {
-        AtomicReference<Thread> threadReference = new AtomicReference<>();
-        Thread thread = new Thread(() -> {
+    private static SuiteThread getInvokerThread(Method method) {
+        AtomicReference<SuiteThread> threadReference = new AtomicReference<>();
+        SuiteThread thread = new SuiteThread(() -> {
             try {
                 method.invoke(null);
             } catch (Exception e) {
@@ -127,9 +128,7 @@ public class ClientUtility {
     public static String extractClassName(String classDef) {
         Matcher matcher = NAME_PATTERN.matcher(classDef);
         if (matcher.find()) {
-            String find = matcher.group(1);
-            TweakSuiteClient.getLogger().info("Matcher found class name: {}", find);
-            return find;
+            return matcher.group(1);
         }
         TweakSuiteClient.getLogger().warn("Matcher could not find class name.");
         return null;

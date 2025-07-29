@@ -14,6 +14,7 @@ import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redot.tweaksuite.commons.Entrypoint;
+import redot.tweaksuite.commons.SuiteThread;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -24,7 +25,7 @@ public class TweakSuiteClient implements ModInitializer {
     @Getter
     private static final Logger logger = LoggerFactory.getLogger("tweaksuite");
     @Getter
-    private static final List<Thread> threadRegistry = Lists.newLinkedList();
+    private static final List<SuiteThread> threadRegistry = Lists.newLinkedList();
 
     @Override
     public void onInitialize() {
@@ -45,10 +46,24 @@ public class TweakSuiteClient implements ModInitializer {
     }
 
     public static void killProcesses() {
+        killProcessesSafe();
+        killProcessesUnsafe();
+    }
+
+    /// Disallows the threads from running. This approach only works
+    /// if the user checks the SuiteThread's permit in their code.
+    public static void killProcessesSafe() {
+        threadRegistry.forEach(thread -> thread.setPermitted(false));
+    }
+
+    /// Tries to kill the threads at all costs
+    public static void killProcessesUnsafe() {
         try {
             threadRegistry.forEach(Thread::stop);
             threadRegistry.clear();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void updateClassPath() {

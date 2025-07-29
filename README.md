@@ -4,8 +4,8 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-📦 Requirements
--
+### 📦 Requirements
+
 - Code editor (IntelliJ recommended)
 - Fabric Loader or Fabric-compatible client
 - JVM arguments (seriously, **don't skip these**):
@@ -16,8 +16,7 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-⚙️ The Process
--
+### ⚙️ The Process
 1. You write de-obfuscated Yarn or Mojang code.
 2. You run the `execute` Gradle task.
 3. TweakSuite compiles, remaps, decompiles, and _yeets_ your code into the game.
@@ -25,8 +24,8 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-🚀 Getting Started
--
+### 🚀 Getting Started
+
 1. Clone this repository into your editor.
 2. Either build the client-side mod, or download it from the latest release.
 3. Launch Minecraft with Fabric _(Don't forget the JVM args above - it will break)_
@@ -35,16 +34,7 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-✨ Features
--
-- Write & run code _while_ the game is running.
-- Re-write and run the same class without renaming it every time.
-- Remapping support... because nobody likes `method_30918`
-
----
-
-🧱 Limitations
--
+### 🧱 Limitations
 - Only compiles classes inside the sandbox directory.
 - Compiled classes are garbage collected when the JVM feels like it.
 - There's a short wait while Gradle does its startup dance.
@@ -52,8 +42,7 @@ _A real-time framework for tweaking Minecraft runtimes._
 
 ---
 
-🔀 Mappings
--
+### 🔀 Mappings
 TweakSuite supports both Mojang's Official and Fabric's Intermediary mappings.
 To switch between them, just change one line in `suite/build.gradle`:
 ```groovy
@@ -64,13 +53,12 @@ Just like any other variable. You're welcome.
 
 ---
 
-🧪 Writing Code
--
+### 🧪 Writing Code
 
 To get your code to actually **run**, you’ll need to annotate 
 a static, no-parameter method with `@Entrypoint`
 
-### Example:
+#### Example:
 ```java
 package redot.tweaksuite.suite.sandbox;
 
@@ -87,22 +75,34 @@ public class TestClass {
 ```
 ---
 
-🛑 The Kill Switch
--
-This will try to stop TweakSuite code execution. 
-You have two. One is a keybind in-game,
-and the other is the `killProcesses` Gradle task.  
+### 🛑 The Kill Switch
+This will attempt to stop TweakSuite code execution.
 
-If the kill switch does not work, best of luck to you.
+You have two options:
+1. An in-game keybind
+2. The `killProcesses` Gradle task
+
+Realistically, you’ll only need this if you get stuck in a `while (true)` loop.  
+And while I *could* tell you not to write infinite loops... let’s be real; they’re fun, and useful for testing. So, the kill switch exists.
+
+Here’s how it works:
+
+1. **First, it asks nicely.**  
+   If your code is merciful enough to call `ThreadManager.beg();` somewhere inside that loop, the thread will honor the kill request.
+
+2. **Then, it chooses violence.**  
+   If begging isn’t implemented (or ignored), it escalates to `Thread#stop()`. This is unsafe, but it might work.
+
+3. **If that still doesn’t work:**  
+   You’re on your own. I suggest you reflect on your decisions, and then start using `ThreadManager.beg();`. It literally begs the thread registry to spare your thread's life.
 
 ---
 
-⚠️ Disclaimer
--
+### ⚠️ Disclaimer
 TweakSuite is the successor to [ConcurrentExecutor](https://github.com/Rehdot/ConcurrentExecutor)
 ... but now with remapping, IntelliSense, and far more potential for disaster.
 
-If you crash, die, get banned... that's on you.
+If you crash, die, get banned... that's on you. ✌️
 
 ---
 Sincerely,  
