@@ -5,15 +5,20 @@ import org.jetbrains.annotations.NotNull;
 import redot.tweaksuite.commons.Entrypoint;
 import redot.tweaksuite.commons.SuiteThread;
 
+import javax.tools.JavaFileObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +26,23 @@ import java.util.regex.Pattern;
 public class ClientUtility {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][A-Za-z0-9_$]*)");
+    private static final Constructor<?> jsfsConstructor;
+    private static final Field jfoField;
+
+    static {
+        try {
+            // private field
+            jfoField = CachedCompiler.class.getDeclaredField("javaFileObjects");
+            jfoField.setAccessible(true);
+
+            // package-private class
+            Class<?> clazz = Class.forName("net.openhft.compiler.JavaSourceFromString");
+            jsfsConstructor = clazz.getDeclaredConstructor(String.class, String.class);
+            jsfsConstructor.setAccessible(true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static void listenToSocket() {
         new Thread(() -> {
@@ -78,25 +100,36 @@ public class ClientUtility {
         new Thread(() -> {
             CachedCompiler compiler = new CachedCompiler(null, null);
             ClassLoader classLoader = new SandboxedClassLoader();
-            List<Class<?>> cList = new LinkedList<>();
+            List<Class<?>> classList = new ArrayList<>();
 
             TweakSuiteClient.getLogger().info("Starting compilation of {} class(es).", classes.size());
 
-            for (String classDef : classes) {
-                String className = extractClassName(classDef);
-                try {
-                    Class<?> clazz = compiler.loadFromJava(classLoader, className, classDef);
-                    TweakSuiteClient.getLogger().info("Loaded class: {}", className);
-                    cList.add(clazz);
-                } catch (Exception e) {
-                    TweakSuiteClient.getLogger().error("Failed compiling class:\n{}\n\nError:\n{}", classDef, e.getMessage());
+            try {
+                for (String classDef : classes) { // for circular dependencies
+                    String className = extractClassName(classDef);
+                    var javaFileObjects = (ConcurrentMap<String, JavaFileObject>) jfoField.get(compiler);
+                    javaFileObjects.put(className, (JavaFileObject) jsfsConstructor.newInstance(className, classDef));
                 }
+
+                String leadClassName = extractClassName(classes.get(0));
+                Class<?> leadClass = compiler.loadFromJava(classLoader, leadClassName, classes.get(0));
+                TweakSuiteClient.getLogger().info("Loaded lead class: {}", leadClassName);
+
+                for (String classDef : classes) {
+                    String className = extractClassName(classDef);
+                    Class<?> clazz = classLoader.loadClass(className);
+                    TweakSuiteClient.getLogger().info("Loaded class: {}", className);
+                    classList.add(clazz);
+                }
+
+            } catch (Exception e) {
+                TweakSuiteClient.getLogger().error("Compilation failed: {}", e.toString());
             }
 
-            runEntrypoint(cList);
+            runEntrypoint(classList);
         }, "TweakSuiteCompiler").start();
-
     }
+
 
     private static void runEntrypoint(List<Class<?>> cList) {
         for (Class<?> clazz : cList) {

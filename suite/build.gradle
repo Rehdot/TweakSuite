@@ -41,7 +41,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.3+1.20.4"
 
-    implementation 'org.benf:cfr:0.152'
+    implementation 'org.vineflower:vineflower:1.11.1'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
