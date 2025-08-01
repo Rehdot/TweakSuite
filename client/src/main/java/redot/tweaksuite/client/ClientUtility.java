@@ -52,8 +52,7 @@ public class ClientUtility {
                          BufferedReader reader = new BufferedReader(
                                  new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
                         handleConnection(reader);
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException ie) {
@@ -96,7 +95,7 @@ public class ClientUtility {
         }
     }
 
-    private static void compileClasses(List<String> classes) {
+    public static void compileClasses(List<String> classes) {
         new Thread(() -> {
             CachedCompiler compiler = new CachedCompiler(null, null);
             ClassLoader classLoader = new SandboxedClassLoader();
@@ -111,8 +110,9 @@ public class ClientUtility {
                     javaFileObjects.put(className, (JavaFileObject) jsfsConstructor.newInstance(className, classDef));
                 }
 
+                ClientWriter clientWriter = new ClientWriter(classes);
                 String leadClassName = extractClassName(classes.get(0));
-                Class<?> leadClass = compiler.loadFromJava(classLoader, leadClassName, classes.get(0));
+                Class<?> leadClass = compiler.loadFromJava(classLoader, leadClassName, classes.get(0), clientWriter);
                 TweakSuiteClient.getLogger().info("Loaded lead class: {}", leadClassName);
 
                 for (String classDef : classes) {
