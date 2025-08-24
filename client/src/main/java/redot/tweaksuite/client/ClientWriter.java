@@ -40,7 +40,7 @@ public class ClientWriter extends PrintWriter {
         super.write(s);
         if (s.contains("error:")) {
             String fqcn = extractFQCN(s);
-            if (fqcn == null) return;
+            if (fqcn == null || fqcn.isEmpty()) return;
             TweakSuiteClient.addClassPathFromFQCN(fqcn);
             ClientUtility.compileClasses(this.classes);
         }

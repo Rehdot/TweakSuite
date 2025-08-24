@@ -83,24 +83,36 @@ You have two options:
 2. The `killProcesses` Gradle task
 
 Realistically, you’ll only need this if you get stuck in a `while (true)` loop.  
-And while I *could* tell you not to write infinite loops... let’s be real; they’re fun, and useful for testing. So, the kill switch exists.
+And while I *could* tell you not to write infinite loops... let’s be real; they’re fun, and useful for testing. 
+So, the kill switch exists. 
+
+Just try to write **safe** infinite loops, like the following:
+```java
+while (ThreadManager.permits()) {
+    // this is safe
+}
+
+while (true) { // this is also safe
+    ThreadManager.beg();
+}
+```
 
 Here’s how it works:
 
 1. **First, it asks nicely.**  
-   If your code is merciful enough to call `ThreadManager.beg();` somewhere inside that loop, the thread will honor the kill request.
+   If your code is merciful enough to use `ThreadManager` in the loop, the thread _should_ honor the kill request. Terms and conditions apply for concurrency.
 
 2. **Then, it chooses violence.**  
-   If begging isn’t implemented (or ignored), it escalates to `Thread#stop()`. This is unsafe, but it might work.
+   If permit checking isn’t implemented (or was ignored), it escalates to `Thread#stop()`. This is unsafe, but it might work.
 
 3. **If that still doesn’t work:**  
-   You’re on your own. I suggest you reflect on your decisions, and then start using `ThreadManager.beg();`. It literally begs the thread registry to spare your thread's life.
+   You’re on your own. I suggest you reflect on your decisions, and then start using `ThreadManager`.
 
 ---
 
 ### ⚠️ Disclaimer
-TweakSuite is the successor to [ConcurrentExecutor](https://github.com/Rehdot/ConcurrentExecutor)
-... but now with remapping, IntelliSense, and far more potential for disaster.
+TweakSuite is the successor to [ConcurrentExecutor](https://github.com/Rehdot/ConcurrentExecutor)... 
+but now with remapping, IntelliSense, and far more potential for disaster.
 
 If you crash, die, get banned... that's on you. ✌️
 
