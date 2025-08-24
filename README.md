@@ -43,11 +43,14 @@ _A real-time framework for tweaking Minecraft runtimes._
 ---
 
 ### 🔀 Mappings
-TweakSuite supports both Mojang's Official and Fabric's Intermediary mappings.
+TweakSuite supports Mojang's **Official**, and Fabric's **Intermediary** & **Yarn** mappings.
 To switch between them, just change one line in `suite/build.gradle`:
 ```groovy
 // <!> CHANGE THIS VARIABLE TO SWAP MAPPINGS <!>
-def mapping = MappingType.OFFICIAL // or MappingType.INTERMEDIARY
+def mapping = MappingType.OFFICIAL
+// Alternatives:
+// MappingType.INTERMEDIARY
+// MappingType.YARN
 ```
 Just like any other variable. You're welcome.
 
@@ -86,6 +89,9 @@ Realistically, you’ll only need this if you get stuck in a `while (true)` loop
 And while I *could* tell you not to write infinite loops... let’s be real; they’re fun, and useful for testing. 
 So, the kill switch exists. 
 
+<details>
+   <summary>Safe infinite loop examples</summary>
+
 Just try to write **safe** infinite loops, like the following:
 ```java
 while (ThreadManager.permits()) {
@@ -95,7 +101,12 @@ while (ThreadManager.permits()) {
 while (true) { // this is also safe
     ThreadManager.beg();
 }
+
+while (true) { // still safe
+    ThreadManager.sleepMS(100);
+}
 ```
+</details>
 
 Here’s how it works:
 

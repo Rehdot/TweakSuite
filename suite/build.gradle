@@ -7,7 +7,16 @@ plugins {
 
 enum MappingType {
     INTERMEDIARY,
-    OFFICIAL
+    OFFICIAL,
+    YARN
+
+    boolean isOfficial() {
+        return this == OFFICIAL
+    }
+
+    boolean isYarn() {
+        return this == YARN
+    }
 }
 
 group = 'redot.tweaksuite.suite'
@@ -29,13 +38,11 @@ dependencies {
     // Redot dependency
     implementation project(':commons')
 
-    switch (mapping) {
-        case MappingType.INTERMEDIARY:
-            mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-            break
-        default:
-            mappings loom.officialMojangMappings()
-            break
+    // mappings!
+    if (mapping.isOfficial()) {
+        mappings loom.officialMojangMappings()
+    } else {
+        mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     }
 
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -83,7 +90,7 @@ tasks.register('remapSandboxJar', RemapJarTask) {
     inputFile.set(sandboxJar.get().archiveFile)
     archiveClassifier.set('remapped-sandbox')
     addNestedDependencies.set(false)
-    targetNamespace.set(mapping.name().toLowerCase())
+    targetNamespace.set(mapping.isOfficial() ? 'official' : 'intermediary')
 }
 
 tasks.register('killProcesses', JavaExec) {
@@ -96,12 +103,19 @@ tasks.register('killProcesses', JavaExec) {
 tasks.register('execute', JavaExec) {
     group = 'tweak'
     description = 'Compile, remap, decompile, and send to Minecraft.'
-    dependsOn 'remapSandboxJar'
+    dependsOn mapping.isYarn() ? 'sandboxJar' : 'remapSandboxJar'
     classpath = sourceSets.main.runtimeClasspath
     mainClass.set('redot.tweaksuite.suite.core.SuiteMain')
 
     doFirst {
-        def remapTask = tasks.getByName('remapSandboxJar')
-        systemProperty 'remapped.jar.path', remapTask.archiveFile.get().asFile.absolutePath
+        def archiveFile -> Provider<RegularFile>
+
+        if (mapping.isYarn()) {
+            archiveFile = sandboxJar.get().archiveFile
+        } else {
+            archiveFile = tasks.getByName('remapSandboxJar').archiveFile
+        }
+
+        systemProperty 'remapped.jar.path', archiveFile.get().asFile.absolutePath
     }
 }

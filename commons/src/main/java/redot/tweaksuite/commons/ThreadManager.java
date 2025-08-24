@@ -28,11 +28,17 @@ public class ThreadManager {
         sleep(milliseconds, TimeUnit.MILLISECONDS);
     }
 
-    /// Sleeps current thread for amount of provided TimeUnit
     public static void sleep(long timeout, TimeUnit timeUnit) {
+        sleep(timeout, timeUnit, true);
+    }
+
+    /// Sleeps current thread for amount of provided TimeUnit
+    /// @param beg Whether the sleep call should beg afterward
+    public static void sleep(long timeout, TimeUnit timeUnit, boolean beg) {
         try {
             timeUnit.sleep(timeout);
         } catch (Exception ignored) {}
+        if (beg) beg();
     }
 
 }
