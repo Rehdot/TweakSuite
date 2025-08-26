@@ -2,6 +2,7 @@ package redot.tweaksuite.client;
 
 import com.google.common.collect.Sets;
 import org.jetbrains.annotations.NotNull;
+import redot.tweaksuite.commons.SuiteClass;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -30,7 +31,11 @@ public class ClientWriter extends PrintWriter {
         DEFAULT_WRITER = writer;
     }
 
-    public ClientWriter(List<String> classes) {
+    public ClientWriter(List<SuiteClass> classes) {
+        this(classes.stream().map(SuiteClass::getClassDef).toList(), false);
+    }
+
+    public ClientWriter(List<String> classes, boolean ignored) {
         super(DEFAULT_WRITER);
         this.classes = classes;
     }

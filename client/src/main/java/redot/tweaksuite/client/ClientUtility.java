@@ -2,7 +2,9 @@ package redot.tweaksuite.client;
 
 import net.openhft.compiler.CachedCompiler;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 import redot.tweaksuite.commons.Entrypoint;
+import redot.tweaksuite.commons.SuiteClass;
 import redot.tweaksuite.commons.SuiteThread;
 
 import javax.tools.JavaFileObject;
@@ -95,47 +97,100 @@ public class ClientUtility {
         }
     }
 
-    public static void compileClasses(List<String> classes) {
+    public static void compileClasses(List<String> classDefs) {
         new Thread(() -> {
-            CachedCompiler compiler = new CachedCompiler(null, null);
-            ClassLoader classLoader = new SandboxedClassLoader();
-            List<Class<?>> classList = new ArrayList<>();
-
-            TweakSuiteClient.getLogger().info("Starting compilation of {} class(es).", classes.size());
-
-            try {
-                for (String classDef : classes) { // for circular dependencies
-                    String className = extractClassName(classDef);
-                    var javaFileObjects = (ConcurrentMap<String, JavaFileObject>) jfoField.get(compiler);
-                    javaFileObjects.put(className, (JavaFileObject) jsfsConstructor.newInstance(className, classDef));
-                }
-
-                ClientWriter clientWriter = new ClientWriter(classes);
-                String leadClassName = extractClassName(classes.get(0));
-                Class<?> leadClass = compiler.loadFromJava(classLoader, leadClassName, classes.get(0), clientWriter);
-                TweakSuiteClient.getLogger().info("Loaded lead class: {}", leadClassName);
-
-                for (String classDef : classes) {
-                    String className = extractClassName(classDef);
-                    Class<?> clazz = classLoader.loadClass(className);
-                    TweakSuiteClient.getLogger().info("Loaded class: {}", className);
-                    classList.add(clazz);
-                }
-
-            } catch (Exception e) {
-                TweakSuiteClient.getLogger().error("Compilation failed: {}", e.toString());
-            }
-
-            runEntrypoint(classList);
+            List<SuiteClass> suiteClasses = createSuiteClasses(classDefs);
+            compileAndLoadClasses(suiteClasses);
+            runEntrypoints(suiteClasses);
         }, "TweakSuiteCompiler").start();
     }
 
+    private static List<SuiteClass> createSuiteClasses(List<String> classDefs) {
+        List<SuiteClass> suiteClasses = new ArrayList<>();
 
-    private static void runEntrypoint(List<Class<?>> cList) {
-        for (Class<?> clazz : cList) {
-            for (Method method : clazz.getDeclaredMethods()) {
+        for (String classDef : classDefs) {
+            SuiteClass suiteClass = new SuiteClass();
+            String className = extractClassName(classDef);
+
+            suiteClass.setClassDef(classDef);
+            suiteClass.setClassName(className);
+            suiteClasses.add(suiteClass);
+        }
+
+        return suiteClasses;
+    }
+
+    private static void compileAndLoadClasses(List<SuiteClass> classes) {
+        CachedCompiler compiler = new CachedCompiler(null, null);
+        ClassLoader loader = new SandboxedClassLoader();
+        ClientWriter writer = new ClientWriter(classes);
+
+        populateCompilerJavaFileObjects(classes, compiler);
+
+        if (!classes.isEmpty()) {
+            SuiteClass leadClass = classes.get(0);
+            loadLeadClass(leadClass, compiler, loader, writer);
+        }
+
+        for (SuiteClass suiteClass : classes) {
+            Class<?> loadedClass = loadClass(loader, suiteClass.getClassName());
+            suiteClass.setLiteralClass(loadedClass);
+
+            if (loadedClass == null) {
+                getLogger().warn("Class '{}' was null during compilation.", suiteClass.getClassName());
+            }
+        }
+    }
+
+    private static Class<?> loadClass(ClassLoader loader, String className) {
+        try {
+            return loader.loadClass(className);
+        } catch (Exception e) {
+            getLogger().error("Failed to load class '{}'", className, e);
+            return null;
+        }
+    }
+
+    private static void loadLeadClass(SuiteClass leadClass, CachedCompiler compiler, ClassLoader loader, ClientWriter writer) {
+        try {
+            compiler.loadFromJava(loader, leadClass.getClassName(), leadClass.getClassDef(), writer);
+        } catch (Exception e) {
+            getLogger().error("Failed to load lead class '{}'", leadClass.getClassName(), e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void populateCompilerJavaFileObjects(List<SuiteClass> classes, CachedCompiler compiler) {
+        try {
+            var javaFileObjects = (ConcurrentMap<String, JavaFileObject>) jfoField.get(compiler);
+            fillJavaFileObjectsMap(classes, javaFileObjects);
+        } catch (IllegalAccessException e) {
+            getLogger().error("Failed reflectively getting JavaFileObjects", e);
+        }
+    }
+
+    private static void fillJavaFileObjectsMap(List<SuiteClass> classes, ConcurrentMap<String, JavaFileObject> javaFileObjects) {
+        for (SuiteClass suiteClass : classes) {
+            try {
+                String className = suiteClass.getClassName();
+                JavaFileObject jfo = (JavaFileObject) jsfsConstructor.newInstance(className, suiteClass.getClassDef());
+                javaFileObjects.put(className, jfo);
+            } catch (Exception e) {
+                getLogger().error("Failed to create JavaFileObject for class '{}'", suiteClass.getClassName(), e);
+            }
+        }
+    }
+
+    private static void runEntrypoints(List<SuiteClass> classes) {
+        for (SuiteClass suiteClass : classes) {
+            if (suiteClass.getLiteralClass() == null) {
+                getLogger().warn("Suite class '{}' was null.", suiteClass.getClassName());
+                continue;
+            }
+
+            for (Method method : suiteClass.getLiteralClass().getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Entrypoint.class)) {
-                    SuiteThread thread = getInvokerThread(method);
+                    SuiteThread thread = createInvokerThread(method);
                     TweakSuiteClient.getThreadRegistry().add(thread);
                     thread.start();
                 }
@@ -144,13 +199,13 @@ public class ClientUtility {
     }
 
     @NotNull
-    private static SuiteThread getInvokerThread(Method method) {
+    private static SuiteThread createInvokerThread(Method method) {
         AtomicReference<SuiteThread> threadReference = new AtomicReference<>();
         SuiteThread thread = new SuiteThread(() -> {
             try {
                 method.invoke(null);
             } catch (Exception e) {
-                TweakSuiteClient.getLogger().error("Failed executing Entrypoint:\n{}", e.getMessage());
+                getLogger().error("Failed executing Entrypoint: {}", e.getMessage(), e);
             }
             TweakSuiteClient.getThreadRegistry().remove(threadReference.get());
         }, "TweakSuiteInvoker");
@@ -163,8 +218,11 @@ public class ClientUtility {
         if (matcher.find()) {
             return matcher.group(1);
         }
-        TweakSuiteClient.getLogger().warn("Matcher could not find class name.");
+        getLogger().warn("Could not extract class name from class definition.");
         return null;
     }
 
+    private static Logger getLogger() {
+        return TweakSuiteClient.getLogger();
+    }
 }

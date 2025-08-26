@@ -2,6 +2,7 @@ package redot.tweaksuite.client;
 
 import com.google.common.collect.Lists;
 import lombok.Getter;
+import lombok.Setter;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -26,6 +27,8 @@ public class TweakSuiteClient implements ModInitializer {
     private static final Logger logger = LoggerFactory.getLogger("tweaksuite");
     @Getter
     private static final List<SuiteThread> threadRegistry = Lists.newLinkedList();
+    @Getter @Setter
+    private static ClassLoader baseClassLoader = TweakSuiteClient.class.getClassLoader();
 
     @Override
     public void onInitialize() {
@@ -119,7 +122,7 @@ public class TweakSuiteClient implements ModInitializer {
     public static void addClassPathFromFQCN(String className) {
         try {
             // Try to load the class first
-            Class<?> clazz = TweakSuiteClient.class.getClassLoader().loadClass(className);
+            Class<?> clazz = baseClassLoader.loadClass(className);
             addClassPathFromClass(clazz);
         } catch (ClassNotFoundException e) {
             logger.error("Could not find class {} to add to classpath", className);
