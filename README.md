@@ -37,8 +37,14 @@ _A real-time framework for tweaking Minecraft runtimes._
 ### 🧱 Limitations
 - Only compiles classes inside the sandbox directory.
 - Compiled classes are garbage collected when the JVM feels like it.
-- There's a short wait while Gradle does its startup dance.
 - Classes with identical names in separate directories cannot compile.
+
+<details>
+      <summary>There's a short wait while Gradle does its startup dance.</summary>
+  *Unless the daemon itself is already running. The 'daemonKeepAlive' Gradle task
+will keep the daemon running on purpose in order to execute your code faster.
+Use this as you see fit.
+</details>
 
 ---
 
