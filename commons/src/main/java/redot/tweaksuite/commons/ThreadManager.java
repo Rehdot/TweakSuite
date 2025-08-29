@@ -1,5 +1,7 @@
 package redot.tweaksuite.commons;
 
+import redot.tweaksuite.commons.model.SuiteThread;
+
 import java.util.concurrent.TimeUnit;
 
 /// A utility class to be used in user-written runtime code.

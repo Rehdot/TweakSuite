@@ -1,7 +1,5 @@
 import net.fabricmc.loom.task.RemapJarTask
 
-import java.util.concurrent.TimeUnit
-
 plugins {
     id 'java'
     id 'fabric-loom' version "${loom_version}"
@@ -66,18 +64,6 @@ test {
     useJUnitPlatform()
 }
 
-tasks.register('daemonKeepAlive') {
-    group = 'tweak'
-    description = 'Keeps the Gradle daemon alive indefinitely. This makes your TweakSuite code execute faster.'
-
-    doLast {
-        println("Gradle daemon is now in keep-alive mode.")
-        while (true) {
-            TimeUnit.MINUTES.sleep(1)
-        }
-    }
-}
-
 def sandboxClassesDir = layout.buildDirectory.dir("sandbox-classes")
 
 tasks.register('compileSandbox', JavaCompile) {
@@ -122,14 +108,14 @@ tasks.register('execute', JavaExec) {
     mainClass.set('redot.tweaksuite.suite.core.SuiteMain')
 
     doFirst {
-        def archiveFile -> Provider<RegularFile>
+        def archiveFile
 
-            if (mapping.isYarn()) {
-                archiveFile = sandboxJar.get().archiveFile
-            } else {
-                archiveFile = tasks.getByName('remapSandboxJar').archiveFile
-            }
+        if (mapping.isYarn()) {
+            archiveFile = sandboxJar.get().archiveFile
+        } else {
+            archiveFile = tasks.getByName('remapSandboxJar').archiveFile
+        }
 
-            systemProperty 'remapped.jar.path', archiveFile.get().asFile.absolutePath
+        systemProperty 'remapped.jar.path', archiveFile.get().asFile.absolutePath
     }
 }

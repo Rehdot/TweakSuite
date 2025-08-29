@@ -1,31 +1,29 @@
-package redot.tweaksuite.client;
+package redot.tweaksuite.client.util;
 
 import net.openhft.compiler.CachedCompiler;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
+import redot.tweaksuite.client.ClientWriter;
+import redot.tweaksuite.client.SandboxedClassLoader;
 import redot.tweaksuite.commons.Entrypoint;
-import redot.tweaksuite.commons.SuiteClass;
-import redot.tweaksuite.commons.SuiteThread;
+import redot.tweaksuite.commons.model.SuiteClass;
+import redot.tweaksuite.commons.model.SuiteThread;
+import redot.tweaksuite.commons.model.ThreadRegistry;
 
 import javax.tools.JavaFileObject;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ClientUtility {
+import static redot.tweaksuite.client.TweakSuiteClient.LOGGER;
+
+/// Utility class to handle all compilation needs
+public class CompileUtil {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("(?:class|interface|enum|record|@interface)\\s+([A-Za-z_$][A-Za-z0-9_$]*)");
     private static final Constructor<?> jsfsConstructor;
@@ -43,57 +41,6 @@ public class ClientUtility {
             jsfsConstructor.setAccessible(true);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    public static void listenToSocket() {
-        new Thread(() -> {
-            try (ServerSocket serverSocket = new ServerSocket(49277)) {
-                while (true) {
-                    try (Socket socket = serverSocket.accept();
-                         BufferedReader reader = new BufferedReader(
-                                 new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
-                        handleConnection(reader);
-                    } catch (IOException e) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                }
-            } catch (IOException ignored) {}
-        }, "TweakSuiteSocketListener").start();
-    }
-
-    private static void handleConnection(BufferedReader reader) throws IOException {
-        List<String> classes = new LinkedList<>();
-        StringBuilder currentClass = new StringBuilder();
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            if (line.equals("---TWEAKSUITE-CLASS-END---")) {
-                if (!currentClass.isEmpty()) {
-                    classes.add(currentClass.toString());
-                    currentClass = new StringBuilder();
-                }
-            } else if (line.equals("---TWEAKSUITE-KILL-SWITCH---")) {
-                TweakSuiteClient.killProcesses();
-                return;
-            } else {
-                if (!currentClass.isEmpty()) {
-                    currentClass.append("\n");
-                }
-                currentClass.append(line);
-            }
-        }
-
-        if (!currentClass.isEmpty()) {
-            classes.add(currentClass.toString());
-        }
-        if (!classes.isEmpty()) {
-            compileClasses(classes);
         }
     }
 
@@ -137,7 +84,7 @@ public class ClientUtility {
             suiteClass.setLiteralClass(loadedClass);
 
             if (loadedClass == null) {
-                getLogger().warn("Class '{}' was null during compilation.", suiteClass.getClassName());
+                LOGGER.warn("Class '{}' was null during compilation.", suiteClass.getClassName());
             }
         }
     }
@@ -146,7 +93,7 @@ public class ClientUtility {
         try {
             return loader.loadClass(className);
         } catch (Exception e) {
-            getLogger().error("Failed to load class '{}'", className, e);
+            LOGGER.error("Failed to load class '{}'", className, e);
             return null;
         }
     }
@@ -155,7 +102,7 @@ public class ClientUtility {
         try {
             compiler.loadFromJava(loader, leadClass.getClassName(), leadClass.getClassDef(), writer);
         } catch (Exception e) {
-            getLogger().error("Failed to load lead class '{}'", leadClass.getClassName(), e);
+            LOGGER.error("Failed to load lead class '{}'", leadClass.getClassName(), e);
         }
     }
 
@@ -165,7 +112,7 @@ public class ClientUtility {
             var javaFileObjects = (ConcurrentMap<String, JavaFileObject>) jfoField.get(compiler);
             fillJavaFileObjectsMap(classes, javaFileObjects);
         } catch (IllegalAccessException e) {
-            getLogger().error("Failed reflectively getting JavaFileObjects", e);
+            LOGGER.error("Failed reflectively getting JavaFileObjects", e);
         }
     }
 
@@ -176,7 +123,7 @@ public class ClientUtility {
                 JavaFileObject jfo = (JavaFileObject) jsfsConstructor.newInstance(className, suiteClass.getClassDef());
                 javaFileObjects.put(className, jfo);
             } catch (Exception e) {
-                getLogger().error("Failed to create JavaFileObject for class '{}'", suiteClass.getClassName(), e);
+                LOGGER.error("Failed to create JavaFileObject for class '{}'", suiteClass.getClassName(), e);
             }
         }
     }
@@ -184,14 +131,14 @@ public class ClientUtility {
     private static void runEntrypoints(List<SuiteClass> classes) {
         for (SuiteClass suiteClass : classes) {
             if (suiteClass.getLiteralClass() == null) {
-                getLogger().warn("Suite class '{}' was null.", suiteClass.getClassName());
+                LOGGER.warn("Suite class '{}' was null.", suiteClass.getClassName());
                 continue;
             }
 
             for (Method method : suiteClass.getLiteralClass().getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Entrypoint.class)) {
                     SuiteThread thread = createInvokerThread(method);
-                    TweakSuiteClient.getThreadRegistry().add(thread);
+                    ThreadRegistry.REGISTRY.add(thread);
                     thread.start();
                 }
             }
@@ -205,24 +152,21 @@ public class ClientUtility {
             try {
                 method.invoke(null);
             } catch (Exception e) {
-                getLogger().error("Failed executing Entrypoint: {}", e.getMessage(), e);
+                LOGGER.error("Failed executing Entrypoint: {}", e.getMessage(), e);
             }
-            TweakSuiteClient.getThreadRegistry().remove(threadReference.get());
+            ThreadRegistry.REGISTRY.remove(threadReference.get());
         }, "TweakSuiteInvoker");
         threadReference.set(thread);
         return thread;
     }
 
-    public static String extractClassName(String classDef) {
+    private static String extractClassName(String classDef) {
         Matcher matcher = NAME_PATTERN.matcher(classDef);
         if (matcher.find()) {
             return matcher.group(1);
         }
-        getLogger().warn("Could not extract class name from class definition.");
+        LOGGER.warn("Could not extract class name from class definition:\n{}", classDef);
         return null;
     }
 
-    private static Logger getLogger() {
-        return TweakSuiteClient.getLogger();
-    }
 }

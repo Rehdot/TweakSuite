@@ -2,7 +2,9 @@ package redot.tweaksuite.client;
 
 import com.google.common.collect.Sets;
 import org.jetbrains.annotations.NotNull;
-import redot.tweaksuite.commons.SuiteClass;
+import redot.tweaksuite.client.util.ClassPathUtil;
+import redot.tweaksuite.client.util.CompileUtil;
+import redot.tweaksuite.commons.model.SuiteClass;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -11,11 +13,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// A PrintWriter to aid in automatically adding sources to the class path and re-compiling
 public class ClientWriter extends PrintWriter {
 
     private static final Pattern ERROR_PATTERN = Pattern.compile("error: (?:package|cannot access) ([a-zA-Z_][\\w$]*(?:\\.[\\w$]+)*)");
     private static final Set<String> COMPILED_FQCNS = Sets.newHashSet();
     private static final PrintWriter DEFAULT_WRITER;
+
     private final List<String> classes;
 
     static {
@@ -46,8 +50,8 @@ public class ClientWriter extends PrintWriter {
         if (s.contains("error:")) {
             String fqcn = extractFQCN(s);
             if (fqcn == null || fqcn.isEmpty()) return;
-            TweakSuiteClient.addClassPathFromFQCN(fqcn);
-            ClientUtility.compileClasses(this.classes);
+            ClassPathUtil.addClassPathFromFQCN(fqcn);
+            CompileUtil.compileClasses(this.classes);
         }
     }
 

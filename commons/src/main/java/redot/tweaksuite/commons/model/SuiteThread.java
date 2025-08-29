@@ -1,4 +1,4 @@
-package redot.tweaksuite.commons;
+package redot.tweaksuite.commons.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,4 +11,5 @@ public class SuiteThread extends Thread {
     public SuiteThread(Runnable runnable, String name) {
         super(runnable, name);
     }
+
 }
