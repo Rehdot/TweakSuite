@@ -18,7 +18,15 @@ public class SocketUtil {
                         .replace("import redot.tweaksuite.suite.sandbox", "// import redot.tweaksuite.suite.sandbox");
                 writer.write(classDef);
                 writer.newLine();
-                writer.write(Constants.CLASS_END_STRING);
+
+                String className = Constants.extractClassName(classDef);
+
+                if (ClassValidator.PERM_CLASS_NAMES.contains(className)) {
+                    writer.write(Constants.PERM_CLASS_END_STRING);
+                } else {
+                    writer.write(Constants.CLASS_END_STRING);
+                }
+
                 writer.newLine();
             }
         });

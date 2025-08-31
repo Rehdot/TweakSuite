@@ -45,6 +45,10 @@ dependencies {
         mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     }
 
+    // at this point we’re just seeing what the JVM will let us get away with
+    compileOnly 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.3+1.20.4"
 
@@ -73,6 +77,7 @@ tasks.register('compileSandbox', JavaCompile) {
     classpath = sourceSets.main.compileClasspath
     destinationDirectory.set(sandboxClassesDir)
     options.release.set(17)
+    options.annotationProcessorPath = tasks.named('compileJava', JavaCompile).get().options.annotationProcessorPath
 }
 
 def sandboxJar = tasks.register('sandboxJar', Jar) {
@@ -108,14 +113,9 @@ tasks.register('execute', JavaExec) {
     mainClass.set('redot.tweaksuite.suite.core.SuiteMain')
 
     doFirst {
-        def archiveFile
-
-        if (mapping.isYarn()) {
-            archiveFile = sandboxJar.get().archiveFile
-        } else {
-            archiveFile = tasks.getByName('remapSandboxJar').archiveFile
-        }
-
+        def archiveFile = mapping.isYarn()
+                ? sandboxJar.get().archiveFile
+                : remapSandboxJar.archiveFile
         systemProperty 'remapped.jar.path', archiveFile.get().asFile.absolutePath
     }
 }

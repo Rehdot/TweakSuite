@@ -41,6 +41,7 @@ public class DecompileUtil {
         IResultSaver resultSaver = new ResultSaver() {
             @Override
             public void saveClassEntry(String s, String s1, String s2, String s3, String content) {
+                System.out.println(content);
                 classDefinitions.add(content);
             }
         };

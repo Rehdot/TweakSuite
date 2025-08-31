@@ -37,14 +37,20 @@ public class ConnectionUtil {
     }
 
     private static void handleConnection(BufferedReader reader) throws IOException {
-        List<String> classes = new LinkedList<>();
+        List<String> tempClasses = new LinkedList<>();
+        List<String> permClasses = new LinkedList<>();
         StringBuilder currentClass = new StringBuilder();
         String line;
 
         while ((line = reader.readLine()) != null) {
             if (line.equals(Constants.CLASS_END_STRING)) {
                 if (!currentClass.isEmpty()) {
-                    classes.add(currentClass.toString());
+                    tempClasses.add(currentClass.toString());
+                    currentClass = new StringBuilder();
+                }
+            } else if (line.equals(Constants.PERM_CLASS_END_STRING)) {
+                if (!currentClass.isEmpty()) {
+                    permClasses.add(currentClass.toString());
                     currentClass = new StringBuilder();
                 }
             } else if (line.equals(Constants.KILL_STRING)) {
@@ -59,10 +65,10 @@ public class ConnectionUtil {
         }
 
         if (!currentClass.isEmpty()) {
-            classes.add(currentClass.toString());
+            tempClasses.add(currentClass.toString());
         }
-        if (!classes.isEmpty()) {
-            CompileUtil.compileClasses(classes);
+        if (!tempClasses.isEmpty()) {
+            CompileUtil.compileClasses(tempClasses, permClasses);
         }
     }
 

@@ -1,6 +1,7 @@
 package redot.tweaksuite.suite.core;
 
 import org.jetbrains.annotations.NotNull;
+import redot.tweaksuite.suite.core.util.ClassValidator;
 import redot.tweaksuite.suite.core.util.DecompileUtil;
 import redot.tweaksuite.suite.core.util.SocketUtil;
 
@@ -22,6 +23,7 @@ public class SuiteMain {
         }
 
         List<String> classes = decompileJar(remappedJarPath);
+        ClassValidator.validateJar(remappedJarPath);
         sendClasses(classes);
     }
 
@@ -41,7 +43,7 @@ public class SuiteMain {
         List<String> classes = DecompileUtil.decompileJar(remappedJarPath);
 
         System.out.println("Decompiled " + classes.size() + " class(es).");
-        classes.forEach(System.out::println);
+//        classes.forEach(System.out::println);
 
         return classes;
     }

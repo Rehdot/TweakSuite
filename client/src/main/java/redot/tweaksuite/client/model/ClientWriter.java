@@ -1,10 +1,9 @@
-package redot.tweaksuite.client;
+package redot.tweaksuite.client.model;
 
 import com.google.common.collect.Sets;
 import org.jetbrains.annotations.NotNull;
 import redot.tweaksuite.client.util.ClassPathUtil;
 import redot.tweaksuite.client.util.CompileUtil;
-import redot.tweaksuite.commons.model.SuiteClass;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
@@ -20,7 +19,7 @@ public class ClientWriter extends PrintWriter {
     private static final Set<String> COMPILED_FQCNS = Sets.newHashSet();
     private static final PrintWriter DEFAULT_WRITER;
 
-    private final List<String> classes;
+    private final List<String> tempClasses, permClasses;
 
     static {
         PrintWriter writer;
@@ -35,13 +34,10 @@ public class ClientWriter extends PrintWriter {
         DEFAULT_WRITER = writer;
     }
 
-    public ClientWriter(List<SuiteClass> classes) {
-        this(classes.stream().map(SuiteClass::getClassDef).toList(), false);
-    }
-
-    public ClientWriter(List<String> classes, boolean ignored) {
+    public ClientWriter(List<String> tempClasses, List<String> permClasses) {
         super(DEFAULT_WRITER);
-        this.classes = classes;
+        this.tempClasses = tempClasses;
+        this.permClasses = permClasses;
     }
 
     @Override
@@ -51,7 +47,7 @@ public class ClientWriter extends PrintWriter {
             String fqcn = extractFQCN(s);
             if (fqcn == null || fqcn.isEmpty()) return;
             ClassPathUtil.addClassPathFromFQCN(fqcn);
-            CompileUtil.compileClasses(this.classes);
+            CompileUtil.compileClasses(this.tempClasses, this.permClasses);
         }
     }
 
