@@ -7,7 +7,7 @@ _A real-time framework for tweaking Java runtimes._
 ### ❗ Important Notice
 
 TweakSuite is now a general-purpose API. Before, it
-was only an implementation for Fabric. TweakFabric is
+was only an implementation for Fabric. [TweakFabric](https://github.com/Rehdot/TweakFabric) is
 now the Fabric implementation of TweakSuite.
 
 ---
