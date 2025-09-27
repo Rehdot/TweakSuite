@@ -63,9 +63,7 @@ public class SuiteCompiler {
     }
 
     public void compileClasses(List<String> tempClassDefs, List<String> permClassDefs) {
-        new Thread(() -> {// todo remove debug
-            System.out.println("DEBUG: " + tempClassDefs.toString() + "\n" + permClassDefs.toString());
-
+        new Thread(() -> {
             List<SuiteClass> tempSuiteClasses = this.createSuiteClasses(tempClassDefs);
             List<SuiteClass> permSuiteClasses = this.createSuiteClasses(permClassDefs);
             SuiteWriter writer = new SuiteWriter(this.tweakSuite, tempClassDefs, permClassDefs);
