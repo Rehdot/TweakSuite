@@ -1,7 +1,5 @@
 package redot.tweaksuite.server.connect;
 
-import redot.tweaksuite.server.TweakSuite;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 
