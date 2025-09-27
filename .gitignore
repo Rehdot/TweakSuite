@@ -1,8 +1,7 @@
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -12,9 +11,6 @@ build/
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
 ### Eclipse ###
 .apt_generated
@@ -24,9 +20,6 @@ out/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
 ### NetBeans ###
 /nbproject/private/
@@ -34,71 +27,12 @@ bin/
 /dist/
 /nbdist/
 /.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
 
 ### Mac OS ###
 .DS_Store
-/client/run/logs/2025-07-28-1.log.gz
-/client/run/logs/2025-07-28-2.log.gz
-/client/run/logs/2025-07-28-3.log.gz
-/client/run/logs/2025-07-28-4.log.gz
-/client/run/logs/2025-07-29-1.log.gz
-/client/run/logs/2025-07-29-2.log.gz
-/client/run/logs/2025-07-29-3.log.gz
-/client/run/logs/2025-07-31-1.log.gz
-/client/run/logs/2025-07-31-2.log.gz
-/client/run/saves/New World/playerdata/a996484f-c1f5-3a23-9c5a-0656b31a193b.dat
-/client/run/saves/New World/playerdata/a996484f-c1f5-3a23-9c5a-0656b31a193b.dat_old
-/client/run/saves/New World/advancements/a996484f-c1f5-3a23-9c5a-0656b31a193b.json
-/client/run/saves/New World/stats/a996484f-c1f5-3a23-9c5a-0656b31a193b.json
-/client/run/crash-reports/crash-2025-07-28_20.45.58-client.txt
-/client/run/logs/debug.log
-/client/run/logs/debug-1.log.gz
-/client/run/logs/debug-2.log.gz
-/client/run/logs/debug-3.log.gz
-/client/run/logs/debug-4.log.gz
-/client/run/logs/debug-5.log.gz
-/client/run/data/fabricDefaultResourcePacks.dat
-/.idea/gradle.xml
-/gradle/wrapper/gradle-wrapper.jar
-/gradle/wrapper/gradle-wrapper.properties
-/gradlew.bat
-/client/run/saves/New World/icon.png
-/client/run/config/fabric/indigo-renderer.properties
-/client/run/logs/latest.log
-/client/run/saves/New World/level.dat
-/client/run/saves/New World/level.dat_old
-/client/run/downloads/log.json
-/.idea/misc.xml
-/client/run/options.txt
-/client/run/saves/New World/entities/r.0.0.mca
-/client/run/saves/New World/poi/r.0.0.mca
-/client/run/saves/New World/region/r.0.0.mca
-/client/run/saves/New World/entities/r.0.-1.mca
-/client/run/saves/New World/poi/r.0.-1.mca
-/client/run/saves/New World/region/r.0.-1.mca
-/client/run/saves/New World/region/r.0.-2.mca
-/client/run/saves/New World/entities/r.-1.0.mca
-/client/run/saves/New World/poi/r.-1.0.mca
-/client/run/saves/New World/region/r.-1.0.mca
-/client/run/saves/New World/entities/r.-1.-1.mca
-/client/run/saves/New World/poi/r.-1.-1.mca
-/client/run/saves/New World/region/r.-1.-1.mca
-/client/run/saves/New World/region/r.-1.-2.mca
-/client/run/saves/New World/entities/r.-2.0.mca
-/client/run/saves/New World/poi/r.-2.0.mca
-/client/run/saves/New World/region/r.-2.0.mca
-/client/run/saves/New World/entities/r.-2.-1.mca
-/client/run/saves/New World/poi/r.-2.-1.mca
-/client/run/saves/New World/region/r.-2.-1.mca
-/client/run/saves/New World/region/r.-2.-2.mca
-/client/run/saves/New World/data/raids.dat
-/client/run/saves/New World/DIM-1/data/raids.dat
-/client/run/saves/New World/DIM1/data/raids_end.dat
-/client/run/saves/New World/data/random_sequences.dat
-/client/run/saves/New World/session.lock
-/client/run/usercache.json
-/.idea/vcs.xml
-/suite/src/main/java/redot/tweaksuite/suite/sandbox/

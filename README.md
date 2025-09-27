@@ -1,78 +1,130 @@
 🛠️ TweakSuite
 =
-_A real-time framework for tweaking Minecraft runtimes._
+_A real-time framework for tweaking Java runtimes._
+
+---
+
+### ❗ Important Notice
+
+TweakSuite is now a general-purpose API. Before, it
+was only an implementation for Fabric. TweakFabric is
+now the Fabric implementation of TweakSuite.
+
+---
+
+### 💪 Capabilities
+
+Within a running JVM, TweakSuite is capable of:
+
+- Compiling user-written Java source code
+- Running code in contexts delegated by the user
+- Injecting existing methods with extra functionality
+
+The core idea is to allow writing code in some capacity,
+and get it to compile and work in whatever context you want.
+This is so we can more efficiently test and debug anything
+and everything inside a running Java application.
+
+---
+
+### 📐 Structure
+
+<details>
+<summary>Client</summary>
+
+The client assumes the position of **writing, compiling, decompiling & sending**
+user-written code to the TweakSuite server.
+
+TweakSuite could support any client
+architecture. For example, if the user wanted to send
+their sources over a socket, or wanted to save
+them to a file, either could be implemented.
+
+Client dependency:
+```xml
+<dependency>
+    <groupId>redot.tweaksuite</groupId>
+    <artifactId>client</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <scope>compile</scope>
+</dependency>
+```
+
+</details>
+
+<details>
+<summary>Commons</summary>
+
+Commons contains the code that the TweakSuite 
+client and server both have access to,
+i.e. all annotations, injection helpers, constants,
+and ThreadManager.
+
+</details>
+
+<details>
+<summary>Server</summary>
+
+The server assumes the position of **compiling, injecting
+& running** code, as sent from the client.
+
+The server architecture is the most robust implementation
+in all of TweakSuite. Its functionality can be overridden,
+though I'd only advise those who are familiar with Java
+internals do so. TweakSuite could realistically support 
+any server architecture.
+
+Server dependency:
+```xml
+<dependency>
+    <groupId>redot.tweaksuite</groupId>
+    <artifactId>server</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <scope>compile</scope>
+</dependency>
+```
+
+</details>
 
 ---
 
 ### 📦 Requirements
 
-- Code editor (IntelliJ recommended)
-- Fabric Loader or Fabric-compatible client
-- JVM arguments (seriously, **don't skip these**):
+Any runtime which uses TweakSuite **must** use the following JVM arguments:
 ```text
 --add-opens java.base/java.lang=ALL-UNNAMED
 --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
 ```
 
----
-
-### ⚙️ The Process
-1. You write de-obfuscated Yarn or Mojang code.
-2. You run the `execute` Gradle task.
-3. TweakSuite compiles, remaps, decompiles, and injects your code into the game.
-4. Minecraft executes it. During runtime.
-
----
-
-### 🚀 Getting Started
-
-1. Clone this repository into your editor.
-2. Either build the client-side mod, or download it from the latest release.
-3. Launch Minecraft with Fabric _(Don't forget the JVM args above - it will break)_
-4. In your editor, go to `redot.tweaksuite.suite.sandbox`
-5. Write code, hit `execute` and watch the sorcery unfold.
-
----
-
-### 🧱 Limitations
-- Only compiles classes inside the sandbox directory.
-- Classes with identical names in separate directories cannot compile.
-- There's a short wait while Gradle does its startup dance.
-
----
-
-### 🔀 Mappings
-TweakSuite supports Mojang's **Official**, and Fabric's **Intermediary** & **Yarn** mappings.
-To switch between them, just change one line in `suite/build.gradle`:
-```groovy
-// <!> CHANGE THIS VARIABLE TO SWAP MAPPINGS <!>
-def mapping = MappingType.OFFICIAL
-// Alternatives:
-// MappingType.INTERMEDIARY
-// MappingType.YARN
+To code with TweakSuite, you need the following repository:
+```xml
+<repository>
+    <id>zenith-artifactory</id>
+    <name>TweakSuite</name>
+    <url>https://artifactory.zenithstudios.dev/artifactory/tweaksuite</url>
+</repository>
 ```
-Just like any other variable. You're welcome.
 
 ---
 
 ### 🧪 Writing Code
 
-To get your code to actually **run**, you’ll need to annotate 
-a static, no-parameter method with `@Entrypoint`
+To get user-written code to run, you’ll need to annotate 
+a static, no-parameter method with `@Entrypoint`.
 
 <details>
 <summary>Entrypoint example</summary>
 
 ```java
-package redot.tweaksuite.suite.sandbox;
+package your.project.structure.sandbox;
 
-import redot.tweaksuite.commons.Entrypoint;
+import redot.tweaksuite.commons.annotation.Entrypoint;
 
 public class TestClass {
     
     @Entrypoint
     public static void run() {
-        System.out.println("Hello, world from TweakSuite!");
+        System.out.println("Hello, world!");
     }
     
 }
@@ -83,7 +135,7 @@ public class TestClass {
 
 ### 🖊️ Class Permanence
 
-This is a fun feature if used correctly. In TweakSuite, classes can be
+This is a fun feature if used correctly. With TweakSuite, classes can be
 either **runtime-temporary**, or **runtime-permanent**.
 
 Permanent classes compile **once**, and then are immutable for the rest
@@ -118,19 +170,19 @@ if you'd like them to compile:
 - Perms are compiled to disk and loaded once by the base ClassLoader.
 - Temps are compiled in-memory and hot-swapped through a sandboxed ClassLoader.
 - If perms could reference temps, they'd be tied to classes that keep disappearing,
-which makes no sense. So we don't allow it.
+which makes no sense. So we can't allow it.
 </details>
 
 <details>
    <summary>Permanent class example</summary>
 
-Permanent classes simply require to be annotated as `Permanent`. 
+Permanent classes simply require to be annotated as `@Permanent`. 
 TweakSuite will do the rest.
 
 ```java
-package redot.tweaksuite.suite.sandbox;
+package your.project.structure.sandbox;
 
-import redot.tweaksuite.commons.Permanent;
+import redot.tweaksuite.commons.annotation.Permanent;
 
 @Permanent
 public class PermanentClass {
@@ -143,56 +195,57 @@ public class PermanentClass {
 
 ---
 
-### 🛑 The Kill Switch
-This will attempt to stop TweakSuite code execution.
+### 💉 Method Injection
 
-You have two options:
-1. An in-game keybind (`K` by default)
-2. The `killProcesses` Gradle task
+This feature is for altering the behavior of methods
+during runtime. It finds the method, then it changes the
+bytecode of the method and re-compiles the class.
 
-Realistically, you’ll only need this if you get stuck in a `while (true)` loop.  
-And while I *could* tell you not to write infinite loops... let’s be real; they’re fun, and useful for testing. 
-So, the kill switch exists. 
+The Inject annotation automatically uses the MethodFinder 
+and MethodInjector classes from commons to do this. These classes
+are available to client users during runtime.
+
+I would be hesitant to use method injection on any
+sources that have been heavily modified by another agent,
+as that is unlikely to work.
 
 <details>
-   <summary>Safe infinite loop examples</summary>
+<summary>Injection example</summary>
 
-Just try to write **safe** infinite loops, like the following:
+Here's an example usage of the Inject annotation:
 ```java
-while (ThreadManager.permits()) {
-    // this is safe
+package your.project.client.sandbox;
+
+import your.project.server.model.Dog;
+import redot.tweaksuite.commons.annotation.*;
+import redot.tweaksuite.commons.inject.method.InjectionPoint;
+
+public class Test {
+
+    @Entrypoint
+    public static void run() {
+        Dog dog = new Dog(); // assume Dog is a class within runtime
+        dog.setSize(4.0); // this would print the "Set size" message
+    }
+
+    // assume setSize is a void method taking a double parameter
+    @Inject(value = Dog.class, name = "setSize", point = InjectionPoint.RETURN)
+    public static void injectSetSize(@This Dog dog, double size) {
+        System.out.println("Set size " + size + " for Dog: " + dog.toString());
+    }
+
 }
 
-while (true) { // this is also safe
-    ThreadManager.beg();
-}
-
-while (true) { // still safe
-    ThreadManager.sleepMS(100);
-}
 ```
-</details>
 
-<details>
-<summary>How it works</summary>
-
-1. **First, it asks nicely.**  
-   If your code is merciful enough to use `ThreadManager` in the loop, the thread _should_ honor the kill request. Terms and conditions apply for concurrency.
-
-2. **Then, it chooses violence.**  
-   If permit checking isn’t implemented (or was ignored), it escalates to `Thread#stop()`. This is unsafe, but it might work.
-
-3. **If that still doesn’t work:**  
-   You’re on your own. I suggest you reflect on your decisions, and then start using `ThreadManager`.
 </details>
 
 ---
 
 ### ⚠️ Disclaimer
-TweakSuite is the successor to [ConcurrentExecutor](https://github.com/Rehdot/ConcurrentExecutor)... 
-but now with remapping, IntelliSense, class permanence, and far more potential for disaster.
-
-If you crash, die, get banned... that's on you. ✌️
+TweakSuite has become a capable API. 
+With great power comes great responsibility.
+Handle with care.
 
 ---
 Sincerely,  
