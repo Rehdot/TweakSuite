@@ -12,6 +12,9 @@ import redot.tweaksuite.server.registry.PermRegistry;
 import redot.tweaksuite.server.registry.ThreadRegistry;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @RequiredArgsConstructor
@@ -19,12 +22,14 @@ public class TweakSuite {
 
     @Setter
     private ClassLoader baseClassLoader;
+
     private final SuiteLogger logger;
     private final SuiteCompiler compiler;
     private final PermRegistry permRegistry;
     private final ThreadRegistry threadRegistry;
     private final ClassPathWorker classPathWorker;
     private final Instrumentation instrumentation;
+    private final Set<Method> entrypoints = new HashSet<>();
 
     public TweakSuite(SuiteLogger logger, ClassResolver resolver) {
         this.logger = logger;

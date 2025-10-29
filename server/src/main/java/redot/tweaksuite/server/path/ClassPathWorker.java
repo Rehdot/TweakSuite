@@ -45,14 +45,14 @@ public class ClassPathWorker {
             URL url = getURLFromObject(object);
             addClassPathReference(url);
         } catch (URISyntaxException exception) {
-            this.tweakSuite.getLogger().error(exception.getMessage());
+            this.tweakSuite.getLogger().error("Failed to add classpath: {}", exception.getMessage());
         }
     }
 
     public void addClassPathReference(URL url) {
         String jarPath = getFormattedPath(url);
         CompilerUtils.addClassPath(jarPath);
-        this.tweakSuite.getLogger().info("Added " + jarPath + " to class path.");
+        this.tweakSuite.getLogger().info("Added {} to class path.", jarPath);
     }
 
     public void addClassPathFromClass(Class<?> clazz) {

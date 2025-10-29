@@ -19,19 +19,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SuiteCompiler {
 
-    private final Constructor<?> jsfsConstructor;
-    private final Field jfoField;
-    private final File permClassDir;
-    private final CachedCompiler permCompiler;
-    private final TweakSuite tweakSuite;
+    protected final Constructor<?> jsfsConstructor;
+    protected final Field jfoField;
+    protected final File permClassDir;
+    protected final CachedCompiler permCompiler;
+    protected final TweakSuite tweakSuite;
 
     public SuiteCompiler(TweakSuite tweakSuite) {
         this.tweakSuite = tweakSuite;
@@ -74,6 +72,7 @@ public class SuiteCompiler {
             this.injectMethods(permSuiteClasses);
             this.injectMethods(tempSuiteClasses);
 
+            this.tweakSuite.getEntrypoints().clear();
             this.runEntrypoints(permSuiteClasses);
             this.runEntrypoints(tempSuiteClasses);
         }, "TweakSuiteCompiler").start();
@@ -161,17 +160,22 @@ public class SuiteCompiler {
         }
     }
 
-    private void runEntrypoints(List<SuiteClass> classes) {
+    public void runEntrypoints(List<SuiteClass> classes) {
         for (SuiteClass suiteClass : classes) {
             Class<?> clazz = suiteClass.getLiteralClass();
             if (clazz == null) continue;
             for (Method method : clazz.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(Entrypoint.class)) {
-                    SuiteThread thread = createInvokerThread(method);
-                    this.tweakSuite.getThreadRegistry().addProcess(thread);
-                    thread.start();
-                }
+                this.tweakSuite.getEntrypoints().add(method);
+                this.runEntrypoint(method);
             }
+        }
+    }
+
+    public void runEntrypoint(Method method) {
+        if (method.isAnnotationPresent(Entrypoint.class)) {
+            SuiteThread thread = this.createInvokerThread(method);
+            this.tweakSuite.getThreadRegistry().addProcess(thread);
+            thread.start();
         }
     }
 
